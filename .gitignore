@@ -1,0 +1,5 @@
+.*.swp
+node_modules
+secret.ls
+secret.js
+secret.min.js

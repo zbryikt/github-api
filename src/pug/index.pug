@@ -1,0 +1,74 @@
+doctype html
+html
+  include /../../static/assets/lib/ldui/pug/ldui.pug
+  head
+    +css("https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css")
+    +css("/assets/lib/ldui/ldui.min.css")
+  body
+    .p-4
+      textarea.form-control.mb-2(ld="edit",rows="20")
+      .btn.btn-outline-dark(ld="commit") Commit
+    +script("/assets/lib/ldbase/base.js")
+    +script("/assets/lib/github/octokit-rest.min.js")
+    +script("/assets/lib/ldui/ldui.min.js")
+    +script("/js/secret.js")
+    script: :lsc
+      octokit = new Octokit auth: secret.token
+      ldc.register \main, <[]>, ->
+        lc = {}
+        ldld = new ldLoader className: 'ldld full'
+        ldld.on!
+        view = new ldView do
+          root: document.body
+          action: click: do
+            commit: ({node}) ->
+              octokit.gists.update {
+                gist_id: lc.id
+                files: do
+                  "index.html": do
+                    content: view.get(\edit).value
+                    filename: "index.html"
+              }
+                .then ->
+                  console.log \done.
+
+
+
+        octokit.gists.list!
+          .then ->
+            it.data.map -> it{url, id}
+            octokit.gists.get gist_id: lc.id = it.data.0.id
+          .then ->
+            #console.log it.data.history
+            octokit.gists.getRevision do
+              gist_id: lc.id
+              sha: it.data.history.0.version
+          .then ->
+            view.get(\edit).value = it.data.files["index.html"].content
+            #console.log [v for k,v of it.data.files].map -> it{filename, content}
+            ldld.off!
+      ldc.app \main
+
+      lc = {}
+      if false =>
+        octokit.gists.list!
+          .then ->
+            it.data.map -> it{url, id}
+            octokit.gists.get gist_id: lc.id = it.data.0.id
+          .then ->
+            #console.log it.data.history
+            octokit.gists.getRevision do
+              gist_id: lc.id
+              sha: it.data.history.0.version
+          .then ->
+            #console.log [v for k,v of it.data.files].map -> it{filename, content}
+            octokit.gists.update do
+              gist_id: lc.id
+              files: do
+                "index.html": do
+                  content: it.data.files['index.html'].content + '.'
+                  filename: "index.html"
+          .then ->
+            console.log it
+            console.log \done.
+
